@@ -4,424 +4,361 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор бассейна</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.5/dist/cdn.min.js"></script>
     <style>
-        .pool-preview {
-            width: 100%;
-            height: 300px;
-            border: 2px solid #ccc;
-            margin: 20px 0;
-            position: relative;
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
         }
-        .stair-fields {
-            max-height: 300px;
-            overflow-y: auto;
+        .btn {
+            margin: 5px;
         }
-        .material-row:hover {
-            background-color: #f8f9fa;
+        .results-table {
+            margin-top: 20px;
+        }
+        .total-cost {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
+    <div class="container mt-5" x-data="calculator">
         <h1 class="mb-4">Калькулятор бассейна</h1>
         
-        <div class="row">
-            <!-- Форма параметров -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Параметры бассейна</h5>
+        <!-- Форма ввода -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Длина (мм)</label>
+                            <input type="number" class="form-control" x-model="length">
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <form id="poolForm">
-                            <!-- Форма бассейна -->
-                            <div class="mb-3">
-                                <label class="form-label">Форма бассейна</label>
-                                <select class="form-select" id="shape" name="shape">
-                                    <option value="Прямоугольный">Прямоугольный</option>
-                                    <option value="Овальный">Овальный</option>
-                                    <option value="L-образный">L-образный</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Основные размеры -->
-                            <div class="mb-3">
-                                <label class="form-label">Длина (мм)</label>
-                                <input type="number" class="form-control" id="length" name="length" min="2000" value="8000">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Ширина (мм)</label>
-                                <input type="number" class="form-control" id="width" name="width" min="1500" value="4000">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Глубина (мм)</label>
-                                <input type="number" class="form-control" id="depth" name="depth" min="600" max="2500" value="1500">
-                            </div>
-                            
-                            <!-- L-образные размеры -->
-                            <div id="l-shape-fields" style="display: none;">
-                                <div class="mb-3">
-                                    <label class="form-label">Длина выступа (мм)</label>
-                                    <input type="number" class="form-control" id="l_length" name="l_length" min="1000" value="3000">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Ширина выступа (мм)</label>
-                                    <input type="number" class="form-control" id="l_width" name="l_width" min="1000" value="2000">
-                                </div>
-                            </div>
-                            
-                            <!-- Тип отделки -->
-                            <div class="mb-3">
-                                <label class="form-label">Тип отделки</label>
-                                <select class="form-select" id="finish_type" name="finish_type">
-                                    <option value="Плитка">Керамогранит/Мозаика</option>
-                                    <option value="Лайнер">Лайнер ПВХ</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Ступени -->
-                            <div class="mb-3">
-                                <label class="form-label">Количество ступеней</label>
-                                <input type="number" class="form-control" id="stair_count" min="0" max="6" value="0">
-                            </div>
-                            <div id="stair-fields" class="stair-fields">
-                                <!-- Поля ступеней будут добавлены динамически -->
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary mt-3">Рассчитать</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Результаты -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Предварительный просмотр</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="pool-preview" id="poolPreview">
-                            <!-- Canvas для отрисовки бассейна -->
-                            <canvas id="previewCanvas"></canvas>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Ширина (мм)</label>
+                            <input type="number" class="form-control" x-model="width">
                         </div>
                     </div>
                 </div>
                 
-                <div class="card mt-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Материалы</h5>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="exportPDF()">
-                                <i class="bi bi-file-pdf"></i> PDF
-                            </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="exportExcel()">
-                                <i class="bi bi-file-excel"></i> Excel
-                            </button>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Тип бассейна</label>
+                            <select class="form-select" x-model="poolType">
+                                <option value="ceramic">Керамогранит</option>
+                                <option value="liner">Пленка ПВХ</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Материал</th>
-                                        <th class="text-end">Количество</th>
-                                        <th>Ед. изм.</th>
-                                        <th class="text-end">Цена</th>
-                                        <th class="text-end">Сумма</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="materialsTable">
-                                    <!-- Результаты расчета будут добавлены динамически -->
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-info">
-                                        <td colspan="4"><strong>Итого:</strong></td>
-                                        <td class="text-end" id="totalSum"><strong>0</strong></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Тип отделки</label>
+                            <select class="form-select" x-model="finishType" x-show="poolType === 'ceramic'">
+                                <option value="ceramic">Керамогранит</option>
+                                <option value="mosaic">Мозаика</option>
+                            </select>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Количество ступеней</label>
+                            <input type="number" class="form-control" x-model="stepsCount" min="0" max="6">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" @click="calculate()" :class="{ 'loading': loading }">
+                    Рассчитать
+                </button>
+                
+                <button class="btn btn-secondary" @click="showRates = !showRates">
+                    Нормы расхода
+                </button>
+            </div>
+        </div>
+        
+        <!-- Таблица норм расхода -->
+        <div class="card mb-4" x-show="showRates">
+            <div class="card-header">
+                <h5 class="mb-0">Редактор норм расхода</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Материал</th>
+                                <th>Единица измерения</th>
+                                <th>Расход</th>
+                                <th>Цена, ₽</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(rate, code) in rates" :key="code">
+                                <tr>
+                                    <td x-text="rate.name"></td>
+                                    <td x-text="rate.unit"></td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" 
+                                                   :value="rate.consumption"
+                                                   :id="'consumption_' + code"
+                                                   step="0.01">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" 
+                                                   :value="rate.price"
+                                                   :id="'price_' + code"
+                                                   step="1">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" 
+                                                @click="saveRate(code)">
+                                            Сохранить
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Результаты расчета -->
+        <div class="card mb-4" x-show="results.length > 0">
+            <div class="card-header">
+                <h5 class="mb-0">Результаты расчета</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Материал</th>
+                                <th>Единица измерения</th>
+                                <th>Количество</th>
+                                <th>Цена за ед., ₽</th>
+                                <th>Стоимость, ₽</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="item in results" :key="item.name">
+                                <tr>
+                                    <td x-text="item.name"></td>
+                                    <td x-text="item.unit"></td>
+                                    <td x-text="formatNumber(item.quantity)"></td>
+                                    <td x-text="formatNumber(item.price)"></td>
+                                    <td x-text="formatNumber(item.total)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Итого:</strong></td>
+                                <td><strong x-text="formatNumber(totalCost)"></strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-success" @click="exportExcel">
+                        Экспорт в Excel
+                    </button>
+                    <button class="btn btn-danger" @click="exportPdf">
+                        Экспорт в PDF
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Обработка формы бассейна
-        document.getElementById('shape').addEventListener('change', function() {
-            const lShapeFields = document.getElementById('l-shape-fields');
-            lShapeFields.style.display = this.value === 'L-образный' ? 'block' : 'none';
-            updatePreview();
-        });
-
-        // Обработка количества ступеней
-        document.getElementById('stair_count').addEventListener('change', function() {
-            const count = parseInt(this.value) || 0;
-            const container = document.getElementById('stair-fields');
-            container.innerHTML = '';
-            
-            for (let i = 0; i < count; i++) {
-                const stairGroup = document.createElement('div');
-                stairGroup.className = 'card mb-2';
-                stairGroup.innerHTML = `
-                    <div class="card-body">
-                        <h6 class="card-title">Ступень ${i + 1}</h6>
-                        <div class="mb-2">
-                            <label class="form-label">Ширина (мм)</label>
-                            <input type="number" class="form-control stair-width" 
-                                   min="200" max="1000" step="50" value="300">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">Высота (мм)</label>
-                            <input type="number" class="form-control stair-height"
-                                   min="100" max="300" step="50" value="150">
-                        </div>
-                    </div>
-                `;
-                container.appendChild(stairGroup);
-            }
-            updatePreview();
-        });
-
-        // Обновление превью бассейна
-        function updatePreview() {
-            const canvas = document.getElementById('previewCanvas');
-            const ctx = canvas.getContext('2d');
-            const container = document.querySelector('.pool-preview');
-            
-            // Устанавливаем размер canvas равным размеру контейнера
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
-            
-            // Очищаем canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Получаем параметры бассейна
-            const shape = document.getElementById('shape').value;
-            const length = parseInt(document.getElementById('length').value);
-            const width = parseInt(document.getElementById('width').value);
-            
-            // Вычисляем масштаб
-            const scale = Math.min(
-                (canvas.width - 40) / length,
-                (canvas.height - 40) / width
-            );
-            
-            // Рисуем бассейн
-            ctx.beginPath();
-            ctx.strokeStyle = '#0d6efd';
-            ctx.fillStyle = '#e7f1ff';
-            
-            const x = (canvas.width - length * scale) / 2;
-            const y = (canvas.height - width * scale) / 2;
-            
-            if (shape === 'Прямоугольный') {
-                ctx.rect(x, y, length * scale, width * scale);
-            } else if (shape === 'Овальный') {
-                ctx.ellipse(
-                    x + (length * scale) / 2,
-                    y + (width * scale) / 2,
-                    (length * scale) / 2,
-                    (width * scale) / 2,
-                    0, 0, 2 * Math.PI
-                );
-            } else if (shape === 'L-образный') {
-                const l_length = parseInt(document.getElementById('l_length').value);
-                const l_width = parseInt(document.getElementById('l_width').value);
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('calculator', () => ({
+                length: 6000,
+                width: 3000,
+                poolType: 'ceramic',
+                finishType: 'ceramic',
+                stepsCount: 4,
+                results: [],
+                totalCost: 0,
+                rates: {},
+                showRates: false,
+                loading: false,
                 
-                ctx.moveTo(x, y);
-                ctx.lineTo(x + length * scale, y);
-                ctx.lineTo(x + length * scale, y + l_width * scale);
-                ctx.lineTo(x + (length - l_length) * scale, y + l_width * scale);
-                ctx.lineTo(x + (length - l_length) * scale, y + width * scale);
-                ctx.lineTo(x, y + width * scale);
-                ctx.closePath();
-            }
-            
-            ctx.fill();
-            ctx.stroke();
-        }
-
-        // Обработка отправки формы
-        document.getElementById('poolForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Собираем данные формы
-            const formData = {
-                shape: document.getElementById('shape').value,
-                length: parseInt(document.getElementById('length').value),
-                width: parseInt(document.getElementById('width').value),
-                depth: parseInt(document.getElementById('depth').value),
-                finish_type: document.getElementById('finish_type').value
-            };
-            
-            // Добавляем L-образные размеры если нужно
-            if (formData.shape === 'L-образный') {
-                formData.l_length = parseInt(document.getElementById('l_length').value);
-                formData.l_width = parseInt(document.getElementById('l_width').value);
-            }
-            
-            // Собираем данные о ступенях
-            const stairCount = parseInt(document.getElementById('stair_count').value) || 0;
-            formData.stairs = [];
-            
-            const widthInputs = document.querySelectorAll('.stair-width');
-            const heightInputs = document.querySelectorAll('.stair-height');
-            
-            for (let i = 0; i < stairCount; i++) {
-                formData.stairs.push({
-                    width: parseInt(widthInputs[i].value),
-                    height: parseInt(heightInputs[i].value)
-                });
-            }
-            
-            try {
-                // Отправляем запрос на сервер
-                const response = await fetch('/api/calculate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
+                async init() {
+                    await this.loadRates();
+                },
                 
-                const result = await response.json();
+                async loadRates() {
+                    try {
+                        const response = await fetch('/rates');
+                        if (!response.ok) {
+                            throw new Error('Ошибка загрузки норм расхода');
+                        }
+                        this.rates = await response.json();
+                    } catch (error) {
+                        console.error('Ошибка загрузки норм расхода:', error);
+                        alert('Ошибка загрузки норм расхода');
+                    }
+                },
                 
-                if (result.success) {
-                    // Обновляем таблицу материалов
-                    const tbody = document.getElementById('materialsTable');
-                    tbody.innerHTML = '';
-                    let total = 0;
-                    
-                    result.materials.forEach(material => {
-                        const sum = material.quantity * material.price;
-                        total += sum;
+                async saveRate(code) {
+                    try {
+                        const consumption = parseFloat(document.getElementById('consumption_' + code).value);
+                        const price = parseFloat(document.getElementById('price_' + code).value);
                         
-                        tbody.innerHTML += `
-                            <tr class="material-row">
-                                <td>${material.name}</td>
-                                <td class="text-end">${material.quantity}</td>
-                                <td>${material.unit}</td>
-                                <td class="text-end">${material.price.toLocaleString()} ₽</td>
-                                <td class="text-end">${sum.toLocaleString()} ₽</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    document.getElementById('totalSum').textContent = total.toLocaleString() + ' ₽';
-                } else {
-                    alert('Ошибка: ' + result.error);
-                }
-            } catch (error) {
-                alert('Ошибка при отправке запроса: ' + error.message);
-            }
-        });
-
-        // Обновляем превью при изменении размеров
-        ['length', 'width', 'l_length', 'l_width'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('input', updatePreview);
-            }
-        });
-
-        // Инициализация превью
-        updatePreview();
-
-        // Функции экспорта
-        async function exportPDF() {
-            try {
-                const response = await fetch('/api/export/pdf', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(getFormData())
-                });
+                        if (isNaN(consumption) || isNaN(price)) {
+                            throw new Error('Введите корректные числовые значения');
+                        }
+                        
+                        const response = await fetch('/rates/' + code, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                consumption: consumption,
+                                price: price
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Ошибка сохранения');
+                        }
+                        
+                        // Обновляем локальные данные
+                        this.rates[code].consumption = consumption;
+                        this.rates[code].price = price;
+                        
+                        alert('Норма расхода успешно обновлена');
+                    } catch (error) {
+                        console.error('Ошибка сохранения:', error);
+                        alert(error.message || 'Произошла ошибка при сохранении');
+                    }
+                },
                 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'расчет_бассейна.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                } else {
-                    throw new Error('Ошибка при экспорте PDF');
-                }
-            } catch (error) {
-                alert('Ошибка при экспорте в PDF: ' + error.message);
-            }
-        }
-
-        async function exportExcel() {
-            try {
-                const response = await fetch('/api/export/excel', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(getFormData())
-                });
+                async calculate() {
+                    this.loading = true;
+                    try {
+                        const response = await fetch('/calculate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                length: this.length,
+                                width: this.width,
+                                pool_type: this.poolType,
+                                finish_type: this.finishType,
+                                steps_count: this.stepsCount
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Ошибка расчета');
+                        }
+                        
+                        const data = await response.json();
+                        this.results = data;
+                        this.totalCost = data.reduce((sum, item) => sum + item.total, 0);
+                    } catch (error) {
+                        console.error('Ошибка расчета:', error);
+                        alert(error.message || 'Произошла ошибка при расчете');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
                 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'расчет_бассейна.xlsx';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                } else {
-                    throw new Error('Ошибка при экспорте Excel');
+                async exportExcel() {
+                    try {
+                        const response = await fetch('/export/excel', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                length: this.length,
+                                width: this.width,
+                                pool_type: this.poolType,
+                                finish_type: this.finishType,
+                                steps_count: this.stepsCount
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Ошибка экспорта');
+                        }
+                        
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'pool_calculation.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                        console.error('Ошибка экспорта в Excel:', error);
+                        alert(error.message || 'Произошла ошибка при экспорте в Excel');
+                    }
+                },
+                
+                async exportPdf() {
+                    try {
+                        const response = await fetch('/export/pdf', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                length: this.length,
+                                width: this.width,
+                                pool_type: this.poolType,
+                                finish_type: this.finishType,
+                                steps_count: this.stepsCount
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Ошибка экспорта');
+                        }
+                        
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'pool_calculation.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                        console.error('Ошибка экспорта в PDF:', error);
+                        alert(error.message || 'Произошла ошибка при экспорте в PDF');
+                    }
+                },
+                
+                formatNumber(number) {
+                    return new Intl.NumberFormat('ru-RU').format(number);
                 }
-            } catch (error) {
-                alert('Ошибка при экспорте в Excel: ' + error.message);
-            }
-        }
-
-        function getFormData() {
-            // Получаем все данные формы
-            const formData = {
-                shape: document.getElementById('shape').value,
-                length: parseInt(document.getElementById('length').value),
-                width: parseInt(document.getElementById('width').value),
-                depth: parseInt(document.getElementById('depth').value),
-                finish_type: document.getElementById('finish_type').value
-            };
-            
-            // Добавляем L-образные размеры если нужно
-            if (formData.shape === 'L-образный') {
-                formData.l_length = parseInt(document.getElementById('l_length').value);
-                formData.l_width = parseInt(document.getElementById('l_width').value);
-            }
-            
-            // Собираем данные о ступенях
-            const stairCount = parseInt(document.getElementById('stair_count').value) || 0;
-            formData.stairs = [];
-            
-            const widthInputs = document.querySelectorAll('.stair-width');
-            const heightInputs = document.querySelectorAll('.stair-height');
-            
-            for (let i = 0; i < stairCount; i++) {
-                formData.stairs.push({
-                    width: parseInt(widthInputs[i].value),
-                    height: parseInt(heightInputs[i].value)
-                });
-            }
-            
-            return formData;
-        }
+            }));
+        });
     </script>
 </body>
 </html>
