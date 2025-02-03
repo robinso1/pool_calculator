@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор бассейна</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            margin-right: 10px;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .result-section {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Калькулятор бассейна</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Параметры бассейна</h5>
+                        <form id="poolForm">
+                            <div class="mb-3">
+                                <label for="length" class="form-label">Длина (мм)</label>
+                                <input type="number" class="form-control" id="length" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="width" class="form-label">Ширина (мм)</label>
+                                <input type="number" class="form-control" id="width" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="shallow_depth" class="form-label">Глубина мелкой части (мм)</label>
+                                <input type="number" class="form-control" id="shallow_depth" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="deep_depth" class="form-label">Глубина глубокой части (мм)</label>
+                                <input type="number" class="form-control" id="deep_depth" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="steps_count" class="form-label">Количество ступеней</label>
+                                <input type="number" class="form-control" id="steps_count" value="3" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pool_type" class="form-label">Тип бассейна</label>
+                                <select class="form-control" id="pool_type">
+                                    <option value="liner">Под лайнер</option>
+                                    <option value="ceramic">Под керамогранит</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Рассчитать</button>
+                            <button type="button" class="btn btn-success" id="exportExcel" disabled>Экспорт в Excel</button>
+                            <button type="button" class="btn btn-danger" id="exportPdf" disabled>Экспорт в PDF</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div id="results" style="display: none;">
+                    <div class="card result-section">
+                        <div class="card-body">
+                            <h5 class="card-title">Размеры</h5>
+                            <div id="dimensions"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card result-section">
+                        <div class="card-body">
+                            <h5 class="card-title">Площади</h5>
+                            <div id="areas"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card result-section">
+                        <div class="card-body">
+                            <h5 class="card-title">Объемы</h5>
+                            <div id="volumes"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card result-section">
+                        <div class="card-body">
+                            <h5 class="card-title">Материалы</h5>
+                            <div id="materials"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card result-section">
+                        <div class="card-body">
+                            <h5 class="card-title">Работы</h5>
+                            <div id="works"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let lastCalculation = null;
+
+        document.getElementById('poolForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                length: parseFloat(document.getElementById('length').value),
+                width: parseFloat(document.getElementById('width').value),
+                shallow_depth: parseFloat(document.getElementById('shallow_depth').value),
+                deep_depth: parseFloat(document.getElementById('deep_depth').value),
+                steps_count: parseInt(document.getElementById('steps_count').value),
+                pool_type: document.getElementById('pool_type').value
+            };
+            
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    lastCalculation = data;
+                    displayResults(data);
+                    document.getElementById('exportExcel').disabled = false;
+                    document.getElementById('exportPdf').disabled = false;
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                alert('Ошибка при отправке запроса: ' + error);
+            }
+        });
+
+        document.getElementById('exportExcel').addEventListener('click', async function() {
+            if (!lastCalculation) return;
+            
+            try {
+                const response = await fetch('/export/excel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(lastCalculation)
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'pool_calculation.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    const data = await response.json();
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                alert('Ошибка при экспорте: ' + error);
+            }
+        });
+
+        document.getElementById('exportPdf').addEventListener('click', async function() {
+            if (!lastCalculation) return;
+            
+            try {
+                const response = await fetch('/export/pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(lastCalculation)
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'pool_calculation.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    const data = await response.json();
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                alert('Ошибка при экспорте: ' + error);
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            
+            // Размеры
+            let dimensionsHtml = '<table class="table">';
+            dimensionsHtml += '<tr><th></th><th>Внутренние</th><th>Внешние</th><th>Котлован</th></tr>';
+            const dimNames = {
+                length: 'Длина',
+                width: 'Ширина',
+                shallow_depth: 'Глубина (мелкая часть)',
+                deep_depth: 'Глубина (глубокая часть)'
+            };
+            for (const [key, name] of Object.entries(dimNames)) {
+                dimensionsHtml += `<tr><td>${name}</td>`;
+                dimensionsHtml += `<td>${data.dimensions.internal[key]} мм</td>`;
+                dimensionsHtml += `<td>${data.dimensions.external[key]} мм</td>`;
+                dimensionsHtml += `<td>${data.dimensions.excavation[key]} мм</td></tr>`;
+            }
+            dimensionsHtml += '</table>';
+            document.getElementById('dimensions').innerHTML = dimensionsHtml;
+            
+            // Площади
+            let areasHtml = '<table class="table">';
+            areasHtml += '<tr><th>Параметр</th><th>Значение</th></tr>';
+            const areaNames = {
+                bottom: 'Дно',
+                walls: 'Стены',
+                steps: 'Ступени',
+                total: 'Общая площадь'
+            };
+            for (const [key, name] of Object.entries(areaNames)) {
+                areasHtml += `<tr><td>${name}</td><td>${data.areas[key]} м²</td></tr>`;
+            }
+            areasHtml += '</table>';
+            document.getElementById('areas').innerHTML = areasHtml;
+            
+            // Объемы
+            let volumesHtml = '<table class="table">';
+            volumesHtml += '<tr><th>Параметр</th><th>Значение</th></tr>';
+            const volumeNames = {
+                excavation: 'Котлован',
+                concrete_m200: 'Бетон М200',
+                concrete_m300: 'Бетон М300'
+            };
+            for (const [key, name] of Object.entries(volumeNames)) {
+                volumesHtml += `<tr><td>${name}</td><td>${data.volumes[key]} м³</td></tr>`;
+            }
+            volumesHtml += '</table>';
+            document.getElementById('volumes').innerHTML = volumesHtml;
+            
+            // Материалы
+            let materialsHtml = '<table class="table">';
+            materialsHtml += '<tr><th>Материал</th><th>Количество</th></tr>';
+            for (const [key, value] of Object.entries(data.materials)) {
+                materialsHtml += `<tr><td>${key}</td><td>${value}</td></tr>`;
+            }
+            materialsHtml += '</table>';
+            document.getElementById('materials').innerHTML = materialsHtml;
+            
+            // Работы
+            let worksHtml = '<table class="table">';
+            worksHtml += '<tr><th>Работа</th><th>Количество</th></tr>';
+            for (const [key, value] of Object.entries(data.works)) {
+                worksHtml += `<tr><td>${key}</td><td>${value}</td></tr>`;
+            }
+            worksHtml += '</table>';
+            document.getElementById('works').innerHTML = worksHtml;
+        }
+    </script>
+</body>
+</html>
