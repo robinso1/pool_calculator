@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file
-from utils.calculator import PoolCalculator
+from src.utils.calculator import PoolCalculator
 import pandas as pd
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -9,8 +9,10 @@ from reportlab.lib import colors
 import io
 import json
 import logging
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, 
+    template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
