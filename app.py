@@ -1,16 +1,13 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, send_file, jsonify
 import pandas as pd
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 import io
 import json
-import logging
 import os
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 class PoolCalculator:
     def __init__(self, length, width, shallow_depth, deep_depth, steps_count=3):
@@ -152,8 +149,6 @@ def index():
 def calculate():
     try:
         data = request.get_json()
-        logger.debug(f"Received data: {data}")
-        
         calculator = PoolCalculator(
             length=float(data['length']),
             width=float(data['width']),
@@ -162,27 +157,21 @@ def calculate():
             steps_count=int(data.get('steps_count', 3))
         )
         
-        pool_type = data.get('pool_type', 'liner')
-        
-        result = {
+        return jsonify({
             'dimensions': calculator.calculate_dimensions(),
             'areas': calculator.calculate_areas(),
             'volumes': calculator.calculate_volumes(),
-            'materials': calculator.calculate_materials(pool_type),
+            'materials': calculator.calculate_materials(data.get('pool_type', 'liner')),
             'works': calculator.calculate_works()
-        }
-        
-        logger.debug(f"Calculated result: {result}")
-        return jsonify(result)
-        
+        })
     except Exception as e:
-        logger.error(f"Error in calculate: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
 @app.route('/export/excel', methods=['POST'])
 def export_excel():
     try:
         data = request.get_json()
+        
         output = io.BytesIO()
         writer = pd.ExcelWriter(output, engine='xlsxwriter')
         
@@ -251,15 +240,14 @@ def export_excel():
             as_attachment=True,
             download_name='pool_calculation.xlsx'
         )
-        
     except Exception as e:
-        logger.error(f"Error in export_excel: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
 @app.route('/export/pdf', methods=['POST'])
 def export_pdf():
     try:
         data = request.get_json()
+        
         output = io.BytesIO()
         c = canvas.Canvas(output, pagesize=A4)
         width, height = A4
@@ -334,9 +322,7 @@ def export_pdf():
             as_attachment=True,
             download_name='pool_calculation.pdf'
         )
-        
     except Exception as e:
-        logger.error(f"Error in export_pdf: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
