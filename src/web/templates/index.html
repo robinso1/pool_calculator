@@ -4,258 +4,192 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор бассейна</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.5/dist/cdn.min.js"></script>
-    <style>
-        .loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        .btn {
-            margin: 5px;
-        }
-        .results-table {
-            margin-top: 20px;
-        }
-        .total-cost {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-    </style>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container mt-5" x-data="calculator">
-        <h1 class="mb-4">Калькулятор бассейна</h1>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8" x-data="calculator()">
+        <h1 class="text-3xl font-bold mb-8">Калькулятор бассейна</h1>
         
         <!-- Форма ввода -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label for="length" class="form-label">Длина (мм)</label>
-                        <input type="number" class="form-control" id="length" x-model="length" min="0" step="100">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="width" class="form-label">Ширина (мм)</label>
-                        <input type="number" class="form-control" id="width" x-model="width" min="0" step="100">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="shallow_depth" class="form-label">Глубина мелкой части (мм)</label>
-                        <input type="number" class="form-control" id="shallow_depth" x-model="shallowDepth" min="0" step="100">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="deep_depth" class="form-label">Глубина глубокой части (мм)</label>
-                        <input type="number" class="form-control" id="deep_depth" x-model="deepDepth" min="0" step="100">
-                    </div>
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Параметры бассейна</h2>
+            
+            <!-- Размеры -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Длина (мм)</label>
+                    <input type="number" x-model="length" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                 </div>
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label class="form-label">Тип бассейна</label>
-                            <select class="form-select" x-model="poolType">
-                                <option value="ceramic">Керамогранит</option>
-                                <option value="liner">Пленка ПВХ</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label class="form-label">Тип отделки</label>
-                            <select class="form-select" x-model="finishType" x-show="poolType === 'ceramic'">
-                                <option value="ceramic">Керамогранит</option>
-                                <option value="mosaic">Мозаика</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label class="form-label">Количество ступеней</label>
-                            <input type="number" class="form-control" x-model="stepsCount" min="0" max="6">
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Ширина (мм)</label>
+                    <input type="number" x-model="width" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                 </div>
-                
-                <button class="btn btn-primary" @click="calculate()" :class="{ 'loading': loading }">
-                    Рассчитать
-                </button>
-                
-                <button class="btn btn-secondary" @click="showRates = !showRates">
-                    Нормы расхода
-                </button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Глубина мелкой части (мм)</label>
+                    <input type="number" x-model="shallowDepth" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Глубина глубокой части (мм)</label>
+                    <input type="number" x-model="deepDepth" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Количество ступеней</label>
+                    <input type="number" x-model="stepsCount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
             </div>
+            
+            <!-- Тип бассейна -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Тип бассейна</label>
+                <div class="flex gap-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" x-model="poolType" value="liner" class="form-radio">
+                        <span class="ml-2">Под лайнер</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" x-model="poolType" value="ceramic" class="form-radio">
+                        <span class="ml-2">Под керамогранит</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Тип отделки (только для керамогранита) -->
+            <div class="mb-6" x-show="poolType === 'ceramic'">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Тип отделки</label>
+                <div class="flex gap-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" x-model="finishType" value="ceramic" class="form-radio">
+                        <span class="ml-2">Керамогранит</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" x-model="finishType" value="mosaic" class="form-radio">
+                        <span class="ml-2">Мозаика</span>
+                    </label>
+                </div>
+            </div>
+            
+            <button 
+                @click="calculate()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                :disabled="loading"
+            >
+                <span x-show="!loading">Рассчитать</span>
+                <span x-show="loading">Загрузка...</span>
+            </button>
         </div>
         
-        <!-- Таблица норм расхода -->
-        <div class="card mb-4" x-show="showRates">
-            <div class="card-header">
-                <h5 class="mb-0">Редактор норм расхода</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Материал</th>
-                                <th>Единица измерения</th>
-                                <th>Расход</th>
-                                <th>Цена, ₽</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="(rate, code) in rates" :key="code">
-                                <tr>
-                                    <td x-text="rate.name"></td>
-                                    <td x-text="rate.unit"></td>
-                                    <td>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control" 
-                                                   :value="rate.consumption"
-                                                   :id="'consumption_' + code"
-                                                   step="0.01">
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control" 
-                                                   :value="rate.price"
-                                                   :id="'price_' + code"
-                                                   step="1">
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-primary" 
-                                                @click="saveRate(code)">
-                                            Сохранить
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
+        <!-- Результаты -->
+        <div x-show="result" class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Результаты расчета</h2>
+            
+            <!-- Размеры -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium mb-3">Размеры</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-medium">Внутренние размеры:</h4>
+                        <p>Длина: <span x-text="formatNumber(result.dimensions.internal.length)"></span> м</p>
+                        <p>Ширина: <span x-text="formatNumber(result.dimensions.internal.width)"></span> м</p>
+                        <p>Глубина (мелкая): <span x-text="formatNumber(result.dimensions.internal.shallow_depth)"></span> м</p>
+                        <p>Глубина (глубокая): <span x-text="formatNumber(result.dimensions.internal.deep_depth)"></span> м</p>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">Наружные размеры:</h4>
+                        <p>Длина: <span x-text="formatNumber(result.dimensions.external.length)"></span> м</p>
+                        <p>Ширина: <span x-text="formatNumber(result.dimensions.external.width)"></span> м</p>
+                        <h4 class="font-medium mt-2">Размеры котлована:</h4>
+                        <p>Длина: <span x-text="formatNumber(result.dimensions.pit.length)"></span> м</p>
+                        <p>Ширина: <span x-text="formatNumber(result.dimensions.pit.width)"></span> м</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Результаты расчета -->
-        <div class="card mb-4" x-show="results.length > 0">
-            <div class="card-header">
-                <h5 class="mb-0">Результаты расчета</h5>
+            
+            <!-- Площади -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium mb-3">Площади</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p>Площадь дна: <span x-text="formatNumber(result.areas.bottom)"></span> м²</p>
+                        <p>Площадь стен: <span x-text="formatNumber(result.areas.walls)"></span> м²</p>
+                        <p>Площадь ступеней: <span x-text="formatNumber(result.areas.steps)"></span> м²</p>
+                    </div>
+                    <div>
+                        <p>Общая площадь: <span x-text="formatNumber(result.areas.total)"></span> м²</p>
+                        <p>Наружная площадь: <span x-text="formatNumber(result.areas.outer)"></span> м²</p>
+                        <p>Площадь котлована: <span x-text="formatNumber(result.areas.pit)"></span> м²</p>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Материал</th>
-                                <th>Единица измерения</th>
-                                <th>Количество</th>
-                                <th>Цена за ед., ₽</th>
-                                <th>Стоимость, ₽</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="item in results" :key="item.name">
-                                <tr>
-                                    <td x-text="item.name"></td>
-                                    <td x-text="item.unit"></td>
-                                    <td x-text="formatNumber(item.quantity)"></td>
-                                    <td x-text="formatNumber(item.price)"></td>
-                                    <td x-text="formatNumber(item.total)"></td>
-                                </tr>
-                            </template>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" class="text-end"><strong>Итого:</strong></td>
-                                <td><strong x-text="formatNumber(totalCost)"></strong></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+            
+            <!-- Объемы -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium mb-3">Объемы</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p>Объем котлована: <span x-text="formatNumber(result.volumes.pit)"></span> м³</p>
+                    </div>
+                    <div>
+                        <p>Объем бетона М200: <span x-text="formatNumber(result.volumes.concrete_200)"></span> м³</p>
+                        <p>Объем бетона М300: <span x-text="formatNumber(result.volumes.concrete_300)"></span> м³</p>
+                    </div>
                 </div>
-                
-                <div class="mt-3">
-                    <button class="btn btn-success" @click="exportExcel">
-                        Экспорт в Excel
-                    </button>
-                    <button class="btn btn-danger" @click="exportPdf">
-                        Экспорт в PDF
-                    </button>
+            </div>
+            
+            <!-- Материалы -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium mb-3">Материалы</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="(quantity, material) in result.materials" :key="material">
+                        <div>
+                            <p><span x-text="material"></span>: <span x-text="formatNumber(quantity)"></span></p>
+                        </div>
+                    </template>
                 </div>
+            </div>
+            
+            <!-- Работы -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium mb-3">Работы</h3>
+                <div class="grid grid-cols-1 gap-2">
+                    <template x-for="work in result.works" :key="work.name">
+                        <div>
+                            <p><span x-text="work.name"></span>: <span x-text="formatNumber(work.quantity)"></span> <span x-text="work.unit"></span></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            
+            <!-- Экспорт -->
+            <div class="flex gap-4">
+                <button 
+                    @click="exportExcel()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                    Экспорт в Excel
+                </button>
+                <button 
+                    @click="exportPdf()" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                    Экспорт в PDF
+                </button>
             </div>
         </div>
     </div>
-
+    
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('calculator', () => ({
-                length: 6000,
-                width: 3000,
-                shallowDepth: 1000,
-                deepDepth: 2000,
+        function calculator() {
+            return {
+                length: 7500,
+                width: 4000,
+                shallowDepth: 1200,
+                deepDepth: 1800,
+                stepsCount: 4,
                 poolType: 'ceramic',
                 finishType: 'ceramic',
-                stepsCount: 4,
-                results: [],
-                totalCost: 0,
-                rates: {},
-                showRates: false,
                 loading: false,
-                
-                async init() {
-                    await this.loadRates();
-                },
-                
-                async loadRates() {
-                    try {
-                        const response = await fetch('/rates');
-                        if (!response.ok) {
-                            throw new Error('Ошибка загрузки норм расхода');
-                        }
-                        this.rates = await response.json();
-                    } catch (error) {
-                        console.error('Ошибка загрузки норм расхода:', error);
-                        alert('Ошибка загрузки норм расхода');
-                    }
-                },
-                
-                async saveRate(code) {
-                    try {
-                        const consumption = parseFloat(document.getElementById('consumption_' + code).value);
-                        const price = parseFloat(document.getElementById('price_' + code).value);
-                        
-                        if (isNaN(consumption) || isNaN(price)) {
-                            throw new Error('Введите корректные числовые значения');
-                        }
-                        
-                        const response = await fetch('/rates/' + code, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                consumption: consumption,
-                                price: price
-                            })
-                        });
-                        
-                        if (!response.ok) {
-                            const error = await response.json();
-                            throw new Error(error.error || 'Ошибка сохранения');
-                        }
-                        
-                        // Обновляем локальные данные
-                        this.rates[code].consumption = consumption;
-                        this.rates[code].price = price;
-                        
-                        alert('Норма расхода успешно обновлена');
-                    } catch (error) {
-                        console.error('Ошибка сохранения:', error);
-                        alert(error.message || 'Произошла ошибка при сохранении');
-                    }
-                },
+                result: null,
                 
                 async calculate() {
                     this.loading = true;
@@ -263,30 +197,27 @@
                         const response = await fetch('/calculate', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
                                 length: this.length,
                                 width: this.width,
-                                shallowDepth: this.shallowDepth,
-                                deepDepth: this.deepDepth,
+                                shallow_depth: this.shallowDepth,
+                                deep_depth: this.deepDepth,
+                                steps_count: this.stepsCount,
                                 pool_type: this.poolType,
-                                finish_type: this.finishType,
-                                steps_count: this.stepsCount
-                            })
+                                finish_type: this.finishType
+                            }),
                         });
                         
-                        if (!response.ok) {
-                            const error = await response.json();
-                            throw new Error(error.error || 'Ошибка расчета');
-                        }
-                        
                         const data = await response.json();
-                        this.results = data;
-                        this.totalCost = data.reduce((sum, item) => sum + item.total, 0);
+                        if (data.success) {
+                            this.result = data.data;
+                        } else {
+                            alert('Ошибка при расчете: ' + data.error);
+                        }
                     } catch (error) {
-                        console.error('Ошибка расчета:', error);
-                        alert(error.message || 'Произошла ошибка при расчете');
+                        alert('Ошибка при отправке запроса: ' + error);
                     } finally {
                         this.loading = false;
                     }
@@ -297,35 +228,25 @@
                         const response = await fetch('/export/excel', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({
-                                length: this.length,
-                                width: this.width,
-                                shallowDepth: this.shallowDepth,
-                                deepDepth: this.deepDepth,
-                                pool_type: this.poolType,
-                                finish_type: this.finishType,
-                                steps_count: this.stepsCount
-                            })
+                            body: JSON.stringify(this.result),
                         });
                         
-                        if (!response.ok) {
-                            const error = await response.json();
-                            throw new Error(error.error || 'Ошибка экспорта');
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'pool_calculation.xlsx';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                        } else {
+                            alert('Ошибка при экспорте в Excel');
                         }
-                        
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'pool_calculation.xlsx';
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
                     } catch (error) {
-                        console.error('Ошибка экспорта в Excel:', error);
-                        alert(error.message || 'Произошла ошибка при экспорте в Excel');
+                        alert('Ошибка при отправке запроса: ' + error);
                     }
                 },
                 
@@ -334,43 +255,33 @@
                         const response = await fetch('/export/pdf', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({
-                                length: this.length,
-                                width: this.width,
-                                shallowDepth: this.shallowDepth,
-                                deepDepth: this.deepDepth,
-                                pool_type: this.poolType,
-                                finish_type: this.finishType,
-                                steps_count: this.stepsCount
-                            })
+                            body: JSON.stringify(this.result),
                         });
                         
-                        if (!response.ok) {
-                            const error = await response.json();
-                            throw new Error(error.error || 'Ошибка экспорта');
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'pool_calculation.pdf';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                        } else {
+                            alert('Ошибка при экспорте в PDF');
                         }
-                        
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'pool_calculation.pdf';
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
                     } catch (error) {
-                        console.error('Ошибка экспорта в PDF:', error);
-                        alert(error.message || 'Произошла ошибка при экспорте в PDF');
+                        alert('Ошибка при отправке запроса: ' + error);
                     }
                 },
                 
-                formatNumber(number) {
-                    return new Intl.NumberFormat('ru-RU').format(number);
+                formatNumber(value) {
+                    return Number(value).toFixed(2);
                 }
-            }));
-        });
+            }
+        }
     </script>
 </body>
 </html>
