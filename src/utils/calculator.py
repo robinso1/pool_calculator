@@ -10,24 +10,36 @@ class PoolCalculator:
         self.total_area = 0
         self.length = 0
         self.width = 0
+        self.shallow_depth = 0
+        self.deep_depth = 0
         
-    def calculate_areas(self, length, width, steps_count):
-        """Рассчитывает площади бассейна"""
+    def calculate_areas(self, length, width, shallow_depth, deep_depth, steps_count):
+        """Рассчитывает площади бассейна с учетом разной глубины"""
         try:
-            # Сохраняем размеры для дальнейших расчетов
-            self.length = length / 1000  # в метрах
-            self.width = width / 1000    # в метрах
+            # Сохраняем размеры для дальнейших расчетов (переводим в метры)
+            self.length = length / 1000
+            self.width = width / 1000
+            self.shallow_depth = shallow_depth / 1000
+            self.deep_depth = deep_depth / 1000
             
             # Площадь дна
             self.bottom_area = self.length * self.width
             
-            # Площадь стен (периметр * высота)
-            self.wall_area = (2 * self.length + 2 * self.width) * 1.5  # высота 1.5м
+            # Площадь стен с учетом разной глубины
+            # Торцевые стены (трапеция)
+            end_wall_area = self.width * (self.shallow_depth + self.deep_depth) / 2
+            # Боковые стены (прямоугольники)
+            side_wall_area = self.length * self.shallow_depth  # Мелкая сторона
+            deep_side_wall_area = self.length * self.deep_depth  # Глубокая сторона
+            
+            self.wall_area = (end_wall_area * 2) + side_wall_area + deep_side_wall_area
             
             # Площадь ступеней
             if steps_count > 0:
                 step_width = 0.3  # ширина ступени 30см
-                self.steps_area = self.width * step_width * steps_count
+                step_height = 0.15  # высота ступени 15см
+                # Учитываем площадь горизонтальной и вертикальной части каждой ступени
+                self.steps_area = self.width * (step_width + step_height) * steps_count
             else:
                 self.steps_area = 0
                 
@@ -48,13 +60,16 @@ class PoolCalculator:
         try:
             materials = {}
             
-            # Бетонное основание
-            materials['concrete_300'] = self.bottom_area * 0.25  # толщина 25см
-            materials['concrete_200'] = self.bottom_area * 0.1   # толщина 10см
+            # Бетонное основание (учитываем глубину)
+            avg_depth = (self.shallow_depth + self.deep_depth) / 2
+            concrete_volume = self.bottom_area * avg_depth
+            materials['concrete_300'] = concrete_volume  # Основной бетон
+            materials['concrete_200'] = self.bottom_area * 0.1   # Подбетонка 10см
             
-            # Арматура и проволока
-            materials['rebar_12'] = self.bottom_area * 25  # 25м.п. на м²
-            materials['wire'] = self.bottom_area * 0.3     # 0.3кг на м²
+            # Арматура и проволока (зависит от площади стен и дна)
+            total_concrete_area = self.wall_area + self.bottom_area
+            materials['rebar_12'] = total_concrete_area * 25  # 25м.п. на м²
+            materials['wire'] = total_concrete_area * 0.3     # 0.3кг на м²
             
             # Гидроизоляция и утепление
             materials['geotextile'] = self.total_area * 1.15     # +15% на нахлесты

@@ -93,7 +93,7 @@ def calculate():
         if not data:
             return jsonify({'error': 'Отсутствуют данные для расчета'}), 400
             
-        required_fields = ['length', 'width', 'pool_type', 'finish_type', 'steps_count']
+        required_fields = ['length', 'width', 'shallow_depth', 'deep_depth', 'pool_type', 'finish_type', 'steps_count']
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             return jsonify({'error': f'Отсутствуют обязательные поля: {", ".join(missing_fields)}'}), 400
@@ -101,10 +101,16 @@ def calculate():
         try:
             length = float(data['length'])
             width = float(data['width'])
+            shallow_depth = float(data['shallow_depth'])
+            deep_depth = float(data['deep_depth'])
             steps_count = int(data['steps_count'])
             
             if length <= 0 or width <= 0:
                 return jsonify({'error': 'Размеры должны быть положительными числами'}), 400
+            if shallow_depth <= 0 or deep_depth <= 0:
+                return jsonify({'error': 'Глубина должна быть положительным числом'}), 400
+            if shallow_depth > deep_depth:
+                return jsonify({'error': 'Глубина мелкой части не может быть больше глубокой'}), 400
             if steps_count < 0 or steps_count > 6:
                 return jsonify({'error': 'Количество ступеней должно быть от 0 до 6'}), 400
                 
@@ -120,7 +126,8 @@ def calculate():
             return jsonify({'error': 'Неверный тип отделки'}), 400
             
         # Расчет площадей
-        calculator.calculate_areas(length, width, steps_count)
+        calculator = PoolCalculator()
+        calculator.calculate_areas(length, width, shallow_depth, deep_depth, steps_count)
         
         # Расчет материалов
         results = []
@@ -150,9 +157,12 @@ def export_excel():
             return jsonify({'error': 'Отсутствуют данные для экспорта'}), 400
             
         # Расчет как в /calculate
+        calculator = PoolCalculator()
         calculator.calculate_areas(
             float(data['length']), 
             float(data['width']), 
+            float(data['shallow_depth']), 
+            float(data['deep_depth']), 
             int(data['steps_count'])
         )
         
@@ -235,9 +245,12 @@ def export_pdf():
             return jsonify({'error': 'Отсутствуют данные для экспорта'}), 400
             
         # Расчет как в /calculate
+        calculator = PoolCalculator()
         calculator.calculate_areas(
             float(data['length']), 
             float(data['width']), 
+            float(data['shallow_depth']), 
+            float(data['deep_depth']), 
             int(data['steps_count'])
         )
         
@@ -275,6 +288,7 @@ def export_pdf():
         # Параметры бассейна
         elements.append(Paragraph(
             f'Размеры: {data["length"]/1000:.1f}м x {data["width"]/1000:.1f}м\n'
+            f'Глубина: {data["shallow_depth"]/1000:.1f}м - {data["deep_depth"]/1000:.1f}м\n'
             f'Тип бассейна: {"Керамогранит" if data["pool_type"] == "ceramic" else "ПВХ пленка"}\n'
             f'Количество ступеней: {data["steps_count"]}',
             styles['Normal']

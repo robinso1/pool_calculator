@@ -31,18 +31,22 @@
         <!-- Форма ввода -->
         <div class="card mb-4">
             <div class="card-body">
-                <div class="row">
+                <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Длина (мм)</label>
-                            <input type="number" class="form-control" x-model="length">
-                        </div>
+                        <label for="length" class="form-label">Длина (мм)</label>
+                        <input type="number" class="form-control" id="length" x-model="length" min="0" step="100">
                     </div>
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Ширина (мм)</label>
-                            <input type="number" class="form-control" x-model="width">
-                        </div>
+                        <label for="width" class="form-label">Ширина (мм)</label>
+                        <input type="number" class="form-control" id="width" x-model="width" min="0" step="100">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="shallow_depth" class="form-label">Глубина мелкой части (мм)</label>
+                        <input type="number" class="form-control" id="shallow_depth" x-model="shallowDepth" min="0" step="100">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="deep_depth" class="form-label">Глубина глубокой части (мм)</label>
+                        <input type="number" class="form-control" id="deep_depth" x-model="deepDepth" min="0" step="100">
                     </div>
                 </div>
                 
@@ -189,6 +193,8 @@
             Alpine.data('calculator', () => ({
                 length: 6000,
                 width: 3000,
+                shallowDepth: 1000,
+                deepDepth: 2000,
                 poolType: 'ceramic',
                 finishType: 'ceramic',
                 stepsCount: 4,
@@ -262,6 +268,8 @@
                             body: JSON.stringify({
                                 length: this.length,
                                 width: this.width,
+                                shallowDepth: this.shallowDepth,
+                                deepDepth: this.deepDepth,
                                 pool_type: this.poolType,
                                 finish_type: this.finishType,
                                 steps_count: this.stepsCount
@@ -294,6 +302,8 @@
                             body: JSON.stringify({
                                 length: this.length,
                                 width: this.width,
+                                shallowDepth: this.shallowDepth,
+                                deepDepth: this.deepDepth,
                                 pool_type: this.poolType,
                                 finish_type: this.finishType,
                                 steps_count: this.stepsCount
@@ -329,6 +339,8 @@
                             body: JSON.stringify({
                                 length: this.length,
                                 width: this.width,
+                                shallowDepth: this.shallowDepth,
+                                deepDepth: this.deepDepth,
                                 pool_type: this.poolType,
                                 finish_type: this.finishType,
                                 steps_count: this.stepsCount
